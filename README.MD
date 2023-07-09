@@ -6,3 +6,8 @@ Neste projeto, você encontra os arquivos iniciais baixados diretamente do Sprin
 - Linguagem: Kotlin
 - Spring Boot: 3.1.1
 - Java 17
+
+## Dependências
+
+- Spring Web MVC
+- Validation
