@@ -15,9 +15,14 @@ class UserRepository {
         return user
     }
 
-    fun findAll() = users.values.sortedBy { it.name }
+    fun findAll(dir: SortDir) =
+        if (dir == SortDir.ASC) users.values.sortedBy { it.name }
+        else users.values.sortedByDescending { it.name }
 
     fun findByIdOrNull(id: Long) = users[id]
+
+    fun findByEmailOrNull(email: String) = users.values.find { it.email == email }
+    fun delete(user: User) = users.remove(user.id)
 
     companion object {
         var lastId: Long = 0L
