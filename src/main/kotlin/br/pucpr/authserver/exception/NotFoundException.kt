@@ -8,5 +8,5 @@ class NotFoundException(
     message: String = "Bad request",
     cause: Throwable? = null
 ) : IllegalArgumentException(message, cause) {
-    constructor(id: Long): this("Not found. id=$id")
+    constructor(id: Long) : this("Not found. id=$id")
 }
