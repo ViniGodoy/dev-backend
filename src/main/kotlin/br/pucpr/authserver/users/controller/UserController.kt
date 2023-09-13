@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -35,10 +36,12 @@ class UserController(val service: UserService) {
         ?: ResponseEntity.noContent().build()
 
     @GetMapping
-    fun list(@RequestParam sortDir: String?) =
-        service.findAll(SortDir.findOrThrow(sortDir ?: "ASC"))
-            .map { UserResponse(it) }
-            .let { ResponseEntity.ok(it) }
+    fun list(@RequestParam sortDir: String? = null, @RequestParam role: String? = null) =
+        if (role == null) {
+            service.findAll(SortDir.findOrThrow(sortDir ?: "ASC"))
+        } else {
+            service.findByRole(role.uppercase())
+        }.map { UserResponse(it) }.let { ResponseEntity.ok(it) }
 
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long) =
@@ -50,4 +53,12 @@ class UserController(val service: UserService) {
     fun delete(@PathVariable id: Long): ResponseEntity<Void> =
         if (service.delete(id)) ResponseEntity.ok().build()
         else ResponseEntity.notFound().build()
+
+    @PutMapping("/{id}/roles/{role}")
+    fun grant(@PathVariable id: Long, @PathVariable role: String): ResponseEntity<Void> =
+        if (service.addRole(id, role.uppercase())) {
+            ResponseEntity.ok().build()
+        } else {
+            ResponseEntity.noContent().build()
+        }
 }

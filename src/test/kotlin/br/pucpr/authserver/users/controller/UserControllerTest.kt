@@ -1,11 +1,10 @@
-package br.pucpr.authserver.controller
+package br.pucpr.authserver.users.controller
 
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
 import br.pucpr.authserver.users.SortDir
 import br.pucpr.authserver.users.Stubs.userStub
 import br.pucpr.authserver.users.UserService
-import br.pucpr.authserver.users.controller.UserController
 import br.pucpr.authserver.users.controller.requests.CreateUserRequest
 import br.pucpr.authserver.users.controller.requests.PatchUserRequest
 import br.pucpr.authserver.users.controller.responses.UserResponse
@@ -27,6 +26,11 @@ class UserControllerTest {
     @BeforeEach
     fun setup() {
         clearAllMocks()
+    }
+
+    @AfterEach
+    fun cleanUp() {
+        checkUnnecessaryStub(serviceMock)
     }
 
     @Test
@@ -73,7 +77,7 @@ class UserControllerTest {
     }
 
     @Test
-    fun `list should return all found users with the given parameter`() {
+    fun `list should return all found users with the given sort parameter`() {
         val users = listOf(
             userStub(1, "Ana"), userStub(2, "Bruno")
         )
@@ -86,13 +90,39 @@ class UserControllerTest {
     }
 
     @Test
-    fun `list should use ASC as default parameter`() {
+    fun `list should use ASC as default sort parameter`() {
         val users = listOf(
             userStub(1, "Ana"), userStub(2, "Bruno")
         )
 
         every { serviceMock.findAll(SortDir.ASC) } returns users
         with(controller.list(null)) {
+            statusCode shouldBe HttpStatus.OK
+            body shouldBe users.map { UserResponse(it) }
+        }
+    }
+
+    @Test
+    fun `list should list by the role in uppercase if the role is provided`() {
+        val users = listOf(
+            userStub(1, "Ana"), userStub(2, "Bruno")
+        )
+
+        every { serviceMock.findByRole("USER") } returns users
+        with(controller.list(role = "user")) {
+            statusCode shouldBe HttpStatus.OK
+            body shouldBe users.map { UserResponse(it) }
+        }
+    }
+
+    @Test
+    fun `list should ignore the sort parameter if the role is provided`() {
+        val users = listOf(
+            userStub(1, "Ana"), userStub(2, "Bruno")
+        )
+
+        every { serviceMock.findByRole("USER") } returns users
+        with(controller.list(sortDir = "ASC", role = "user")) {
             statusCode shouldBe HttpStatus.OK
             body shouldBe users.map { UserResponse(it) }
         }
@@ -134,10 +164,5 @@ class UserControllerTest {
     fun `delete should return NOT_FOUND if the user does not exists`() {
         every { serviceMock.delete(1) } returns false
         controller.delete(1).statusCode shouldBe HttpStatus.NOT_FOUND
-    }
-
-    @AfterEach
-    fun cleanUp() {
-        checkUnnecessaryStub(serviceMock)
     }
 }
