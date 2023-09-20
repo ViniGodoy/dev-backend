@@ -30,4 +30,6 @@ class User(
         inverseJoinColumns = [JoinColumn(name = "idRole")]
     )
     val roles: MutableSet<Role> = mutableSetOf()
-)
+) {
+    val isAdmin: Boolean get() = roles.any { it.name == "ADMIN" }
+}

@@ -1,13 +1,19 @@
 package br.pucpr.authserver.users.controller
 
+import br.pucpr.authserver.exception.ForbiddenException
+import br.pucpr.authserver.security.UserToken
 import br.pucpr.authserver.users.SortDir
 import br.pucpr.authserver.users.UserService
 import br.pucpr.authserver.users.controller.requests.CreateUserRequest
+import br.pucpr.authserver.users.controller.requests.LoginRequest
 import br.pucpr.authserver.users.controller.requests.PatchUserRequest
 import br.pucpr.authserver.users.controller.responses.UserResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -28,12 +34,20 @@ class UserController(val service: UserService) {
             .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("permitAll()")
+    @SecurityRequirement(name = "AuthServer")
     fun update(
         @PathVariable id: Long,
-        @Valid @RequestBody request: PatchUserRequest
-    ) = service.update(id, request.name!!)
-        ?.let { ResponseEntity.ok(UserResponse(it)) }
-        ?: ResponseEntity.noContent().build()
+        @Valid @RequestBody request: PatchUserRequest,
+        auth: Authentication
+    ): ResponseEntity<UserResponse> {
+        val token = auth.principal as? UserToken ?: throw ForbiddenException()
+        if (token.id != id && !token.isAdmin) throw ForbiddenException()
+
+        return service.update(id, request.name!!)
+            ?.let { ResponseEntity.ok(UserResponse(it)) }
+            ?: ResponseEntity.noContent().build()
+    }
 
     @GetMapping
     fun list(@RequestParam sortDir: String? = null, @RequestParam role: String? = null) =
@@ -50,6 +64,8 @@ class UserController(val service: UserService) {
             ?: ResponseEntity.notFound().build()
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "AuthServer")
     fun delete(@PathVariable id: Long): ResponseEntity<Void> =
         if (service.delete(id)) ResponseEntity.ok().build()
         else ResponseEntity.notFound().build()
@@ -61,4 +77,10 @@ class UserController(val service: UserService) {
         } else {
             ResponseEntity.noContent().build()
         }
+
+    @PostMapping("/login")
+    fun login(@Valid @RequestBody login: LoginRequest) =
+        service.login(login.email!!, login.password!!)
+            ?.let { ResponseEntity.ok(it) }
+            ?: ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
 }

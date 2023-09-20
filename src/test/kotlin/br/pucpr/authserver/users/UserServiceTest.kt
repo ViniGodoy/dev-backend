@@ -3,8 +3,11 @@ package br.pucpr.authserver.users
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
 import br.pucpr.authserver.roles.RoleRepository
+import br.pucpr.authserver.security.Jwt
 import br.pucpr.authserver.users.Stubs.roleStub
 import br.pucpr.authserver.users.Stubs.userStub
+import br.pucpr.authserver.users.controller.responses.LoginResponse
+import br.pucpr.authserver.users.controller.responses.UserResponse
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -26,7 +29,9 @@ import java.util.Optional
 internal class UserServiceTest {
     private val repositoryMock = mockk<UserRepository>()
     private val roleRepositoryMock = mockk<RoleRepository>()
-    private val service = UserService(repositoryMock, roleRepositoryMock)
+    private val jwt = mockk<Jwt>()
+
+    private val service = UserService(repositoryMock, roleRepositoryMock, jwt)
 
     @BeforeEach
     fun setup() {
@@ -35,7 +40,7 @@ internal class UserServiceTest {
 
     @AfterEach
     fun cleanUp() {
-        checkUnnecessaryStub(repositoryMock, roleRepositoryMock)
+        checkUnnecessaryStub(repositoryMock, roleRepositoryMock, jwt)
     }
 
     @Test
@@ -188,4 +193,28 @@ internal class UserServiceTest {
         user.roles shouldContain role
     }
 
+    @Test
+    fun `login should return null if the user is not found`() {
+        every { repositoryMock.findByEmail("email") } returns null
+        service.login("email", "password") shouldBe null
+    }
+
+    @Test
+    fun `login should return null if the password is wrong`() {
+        val user = userStub()
+        every { repositoryMock.findByEmail(user.email) } returns user
+        service.login(user.email, "wrong") shouldBe null
+    }
+
+    @Test
+    fun `login should return the login response if credentials are correct`() {
+        val user = userStub()
+        every { repositoryMock.findByEmail(user.email) } returns user
+        every { jwt.createToken(user) } returns "token"
+
+        service.login(user.email, user.password) shouldBe LoginResponse(
+            token = "token",
+            UserResponse(user)
+        )
+    }
 }

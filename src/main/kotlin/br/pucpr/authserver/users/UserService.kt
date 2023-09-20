@@ -3,6 +3,9 @@ package br.pucpr.authserver.users
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
 import br.pucpr.authserver.roles.RoleRepository
+import br.pucpr.authserver.security.Jwt
+import br.pucpr.authserver.users.controller.responses.LoginResponse
+import br.pucpr.authserver.users.controller.responses.UserResponse
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -11,7 +14,8 @@ import kotlin.jvm.optionals.getOrNull
 @Service
 class UserService(
     val repository: UserRepository,
-    val roleRepository: RoleRepository
+    val roleRepository: RoleRepository,
+    val jwt: Jwt
 ) {
     fun insert(user: User): User {
         if (repository.findByEmail(user.email) != null) {
@@ -42,7 +46,7 @@ class UserService(
     fun delete(id: Long): Boolean {
         val user = findByIdOrNull(id) ?: return false
 
-        if (user.roles.any { it.name == "ADMIN" }) {
+        if (user.isAdmin) {
             val count = repository.findByRole("ADMIN").size
             if (count == 1) throw BadRequestException("Cannot delete the last system admin!")
         }
@@ -63,6 +67,16 @@ class UserService(
         repository.save(user)
         log.info("Granted role {} to user {}", role.name, user.id)
         return true
+    }
+
+    fun login(email: String, password: String): LoginResponse? {
+        val user = repository.findByEmail(email) ?: return null
+        if (user.password != password) return null
+        log.info("User logged in. id={} name={}", user.id, user.name)
+        return LoginResponse(
+            token = jwt.createToken(user),
+            UserResponse(user)
+        )
     }
 
     companion object {
