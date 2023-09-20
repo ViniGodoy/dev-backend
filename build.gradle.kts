@@ -24,15 +24,24 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("com.h2database:h2")
 
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    val jjwt = "0.12.5"
+    implementation("io.jsonwebtoken:jjwt-api:${jjwt}")
+    implementation("io.jsonwebtoken:jjwt-jackson:${jjwt}")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:${jjwt}")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.mockk:mockk:1.13.7")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:5.6.2")
-    runtimeOnly("io.kotest:kotest-assertions-core:5.6.2")
+    testImplementation("io.mockk:mockk:1.13.10")
+
+    val kottest = "5.8.1"
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:${kottest}")
+    runtimeOnly("io.kotest:kotest-assertions-core:${kottest}")
 }
 
 tasks.withType<KotlinCompile> {
