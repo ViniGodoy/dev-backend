@@ -1,9 +1,7 @@
 package br.pucpr.authserver.roles
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.Id
+import br.pucpr.authserver.users.User
+import jakarta.persistence.*
 
 @Entity
 class Role(
@@ -15,4 +13,7 @@ class Role(
 
     @Column(nullable = false)
     val description: String = "",
+
+    @ManyToMany(mappedBy = "roles")
+    val users: MutableSet<User> = mutableSetOf()
 )

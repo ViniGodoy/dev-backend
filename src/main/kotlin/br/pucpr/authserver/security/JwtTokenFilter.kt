@@ -15,5 +15,4 @@ class JwtTokenFilter(private val jwt: Jwt) : GenericFilterBean() {
         if (auth != null) SecurityContextHolder.getContext().authentication = auth
         chain.doFilter(req, res)
     }
-
 }

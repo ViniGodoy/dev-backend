@@ -12,19 +12,14 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import io.mockk.checkUnnecessaryStub
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.justRun
-import io.mockk.mockk
-import io.mockk.slot
+import io.mockk.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
-import java.util.Optional
+import java.util.*
 
 internal class UserServiceTest {
     private val repositoryMock = mockk<UserRepository>()

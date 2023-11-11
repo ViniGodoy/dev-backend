@@ -1,18 +1,19 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
-    id("org.springframework.boot") version "3.1.2"
-    id("io.spring.dependency-management") version "1.1.2"
-    kotlin("jvm") version "1.8.22"
-    kotlin("plugin.spring") version "1.8.22"
-    kotlin("plugin.jpa") version "1.8.22"
+    id("org.springframework.boot") version "3.3.5"
+    id("io.spring.dependency-management") version "1.1.6"
+
+    kotlin("jvm") version "1.9.25"
+    kotlin("plugin.spring") version "1.9.25"
+    kotlin("plugin.jpa") version "1.9.25"
 }
 
 group = "br.pucpr"
-version = "0.0.3-SNAPSHOT"
+version = "0.1.0-SNAPSHOT"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
@@ -20,39 +21,48 @@ repositories {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
-
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     runtimeOnly("com.h2database:h2")
-    implementation("com.mysql:mysql-connector-j:8.1.0")
+    implementation("com.mysql:mysql-connector-j:9.1.0")
 
-
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
-    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
-    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    val jjwt = "0.12.6"
+    implementation("io.jsonwebtoken:jjwt-api:${jjwt}")
+    implementation("io.jsonwebtoken:jjwt-jackson:${jjwt}")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:${jjwt}")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.mockk:mockk:1.13.7")
-    testImplementation("io.kotest:kotest-runner-junit5-jvm:5.6.2")
-    runtimeOnly("io.kotest:kotest-assertions-core:5.6.2")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("org.springframework.security:spring-security-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    val awsVersion= "1.12.777"
+    implementation("com.amazonaws:aws-java-sdk-bom:$awsVersion")
+    implementation("com.amazonaws:aws-java-sdk-s3:$awsVersion")
+
+    val kotestVersion = "5.9.1"
+    testImplementation("io.kotest:kotest-runner-junit5-jvm:$kotestVersion")
+    runtimeOnly("io.kotest:kotest-assertions-core:$kotestVersion")
+    testImplementation("io.mockk:mockk:1.13.12")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs += "-Xjsr305=strict"
-        jvmTarget = "17"
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xjsr305=strict")
     }
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
 }
 
 allOpen {
     annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

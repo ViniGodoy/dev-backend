@@ -10,7 +10,7 @@ data class UserToken(
 ) {
     constructor() : this(0, "", setOf())
     constructor(user: User) : this(
-        id = user.id ?: -1L,
+        id = user.id!!,
         name = user.name,
         roles = user.roles.map { it.name }.toSortedSet()
     )

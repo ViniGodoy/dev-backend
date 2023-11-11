@@ -9,19 +9,20 @@ import br.pucpr.authserver.users.controller.responses.UserResponse
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import kotlin.jvm.optionals.getOrNull
 
 @Service
 class UserService(
     val repository: UserRepository,
     val roleRepository: RoleRepository,
+    val avatarService: AvatarService,
     val jwt: Jwt
 ) {
     fun insert(user: User): User {
         if (repository.findByEmail(user.email) != null) {
             throw BadRequestException("User already exists")
         }
-
         return repository.save(user)
             .also { log.info("User inserted: {}", it.id) }
     }
@@ -38,19 +39,18 @@ class UserService(
         SortDir.DESC -> repository.findAll(Sort.by("name").descending())
     }
 
-    fun findByRole(role: String) = repository.findByRole(role)
+    fun findByRole(role: String): List<User> = repository.findByRole(role)
 
     fun findByIdOrNull(id: Long) = repository.findById(id).getOrNull()
-    private fun findByIdOrThrow(id: Long) = findByIdOrNull(id) ?: throw NotFoundException(id)
+    private fun findByIdOrThrow(id: Long) =
+        findByIdOrNull(id) ?: throw NotFoundException(id)
 
     fun delete(id: Long): Boolean {
         val user = findByIdOrNull(id) ?: return false
-
-        if (user.isAdmin) {
+        if (user.roles.any { it.name == "ADMIN" }) {
             val count = repository.findByRole("ADMIN").size
             if (count == 1) throw BadRequestException("Cannot delete the last system admin!")
         }
-
         repository.delete(user)
         log.info("User deleted: {}", user.id)
         return true
@@ -60,8 +60,7 @@ class UserService(
         val user = findByIdOrThrow(id)
         if (user.roles.any { it.name == roleName }) return false
 
-        val role = roleRepository.findByName(roleName)
-            ?: throw BadRequestException("Invalid role: $roleName")
+        val role = roleRepository.findByName(roleName) ?: throw BadRequestException("Invalid role: $roleName")
 
         user.roles.add(role)
         repository.save(user)
@@ -72,12 +71,23 @@ class UserService(
     fun login(email: String, password: String): LoginResponse? {
         val user = repository.findByEmail(email) ?: return null
         if (user.password != password) return null
-        log.info("User logged in. id={} name={}", user.id, user.name)
+
+        log.info("User logged in. id={}, name={}", user.id, user.name)
         return LoginResponse(
             token = jwt.createToken(user),
-            UserResponse(user)
+            user = toResponse(user)
         )
     }
+
+    fun saveAvatar(id: Long, avatar: MultipartFile): String {
+        val user = findByIdOrThrow(id)
+        user.avatar = avatarService.save(user, avatar)
+        repository.save(user)
+        return avatarService.urlFor(user.avatar)
+    }
+
+    fun toResponse(user: User) =
+        UserResponse(user, avatarService.urlFor(user.avatar))
 
     companion object {
         private val log = LoggerFactory.getLogger(UserService::class.java)
