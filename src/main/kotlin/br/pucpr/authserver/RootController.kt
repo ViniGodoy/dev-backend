@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping
 class RootController {
     @GetMapping("healthcheck")
-    fun healthCheck() = ResponseEntity.ok(mapOf("status" to "OK"))
+    fun healthcheck() = ResponseEntity.ok(mapOf("status" to "OK"))
 }

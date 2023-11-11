@@ -17,7 +17,6 @@ class RoleService(val repository: RoleRepository) {
 
     fun findAll(): List<Role> = repository.findAll(Sort.by("name").ascending())
 
-
     companion object {
         private val log = LoggerFactory.getLogger(RoleService::class.java)
     }

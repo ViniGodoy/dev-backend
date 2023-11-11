@@ -5,33 +5,30 @@ import br.pucpr.authserver.roles.RoleRepository
 import br.pucpr.authserver.users.User
 import br.pucpr.authserver.users.UserRepository
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.stereotype.Component
 
 @Component
 class Bootstrapper(
-    val rolesRepository: RoleRepository,
-    val userRepository: UserRepository
-) : ApplicationListener<ContextRefreshedEvent> {
+    val userRepository: UserRepository,
+    val roleRepository: RoleRepository,
+    @Qualifier("defaultAdmin") val adminUser: User
+): ApplicationListener<ContextRefreshedEvent> {
     override fun onApplicationEvent(event: ContextRefreshedEvent) {
         val adminRole =
-            rolesRepository.findByName("ADMIN") ?: rolesRepository
-                .save(Role(name = "ADMIN", description = "System administrator"))
-                .also {
-                    rolesRepository.save(Role(name = "USER", description = "Paying user"))
-                    log.info("ADMIN and USER roles created")
-                }
+            roleRepository.findByName("ADMIN") ?:
+                roleRepository.save(Role(name = "ADMIN", description = "System administrator"))
+                    .also {
+                        roleRepository.save(Role(name = "USER", description = "Premium User"))
+                        log.info("ADMIN and USER roles created")
+                    }
 
         if (userRepository.findByRole("ADMIN").isEmpty()) {
-            val admin = User(
-                email = "admin@authserver.com",
-                password = "admin",
-                name = "Auth Server Administrator",
-            )
-            admin.roles.add(adminRole)
-            userRepository.save(admin)
-            log.info("Admin user created")
+            adminUser.roles.add(adminRole)
+            userRepository.save(adminUser)
+            log.info("Administrator created")
         }
     }
 

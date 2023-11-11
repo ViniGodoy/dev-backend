@@ -24,18 +24,20 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/users")
 class UserController(val service: UserService) {
     @PostMapping
     fun insert(@Valid @RequestBody user: CreateUserRequest) =
-        UserResponse(service.insert(user.toUser()))
+        service.insert(user.toUser())
+            .let { service.toResponse(it) }
             .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
 
-    @PatchMapping("/{id}")
+    @SecurityRequirement(name="AuthServer")
     @PreAuthorize("permitAll()")
-    @SecurityRequirement(name = "AuthServer")
+    @PatchMapping("/{id}")
     fun update(
         @PathVariable id: Long,
         @Valid @RequestBody request: PatchUserRequest,
@@ -45,7 +47,8 @@ class UserController(val service: UserService) {
         if (token.id != id && !token.isAdmin) throw ForbiddenException()
 
         return service.update(id, request.name!!)
-            ?.let { ResponseEntity.ok(UserResponse(it)) }
+            ?.let { service.toResponse(it) }
+            ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.noContent().build()
     }
 
@@ -55,17 +58,18 @@ class UserController(val service: UserService) {
             service.findAll(SortDir.findOrThrow(sortDir ?: "ASC"))
         } else {
             service.findByRole(role.uppercase())
-        }.map { UserResponse(it) }.let { ResponseEntity.ok(it) }
+        }.map { service.toResponse(it) }.let { ResponseEntity.ok(it) }
 
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long) =
         service.findByIdOrNull(id)
-            ?.let { ResponseEntity.ok(UserResponse(it)) }
+            ?.let { service.toResponse(it) }
+            ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 
-    @DeleteMapping("/{id}")
+    @SecurityRequirement(name="AuthServer")
     @PreAuthorize("hasRole('ADMIN')")
-    @SecurityRequirement(name = "AuthServer")
+    @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long): ResponseEntity<Void> =
         if (service.delete(id)) ResponseEntity.ok().build()
         else ResponseEntity.notFound().build()
@@ -83,4 +87,11 @@ class UserController(val service: UserService) {
         service.login(login.email!!, login.password!!)
             ?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+
+    @SecurityRequirement(name="AuthServer")
+    @PreAuthorize("permitAll()")
+    @PutMapping("/{id}/avatar", consumes=["multipart/form-data"])
+    fun uploadAvatar(@PathVariable id: Long, @RequestParam avatar: MultipartFile) =
+        service.saveAvatar(id, avatar)
+            .also { ResponseEntity.ok().build<Void>() }
 }

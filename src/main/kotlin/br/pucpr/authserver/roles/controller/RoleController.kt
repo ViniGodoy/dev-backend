@@ -21,7 +21,9 @@ class RoleController(val service: RoleService) {
             .let { ResponseEntity.status(HttpStatus.CREATED).body(it) }
 
     @GetMapping
-    fun list() = service.findAll()
-        .map { RoleResponse(it) }
-        .let { ResponseEntity.ok(it) }
+    fun list() =
+        service.findAll()
+            .map { RoleResponse(it) }
+            .let { ResponseEntity.ok(it) }
+
 }

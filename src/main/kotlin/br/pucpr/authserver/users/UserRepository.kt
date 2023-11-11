@@ -8,11 +8,9 @@ import org.springframework.stereotype.Repository
 interface UserRepository : JpaRepository<User, Long> {
     fun findByEmail(email: String): User?
 
-    @Query(
-        "select distinct u from User u" +
-                " join u.roles r" +
-                " where r.name = :role" +
-                " order by u.name"
-    )
+    @Query("select distinct u from User u" +
+            " join u.roles r" +
+            " where r.name = :role" +
+            " order by u.name")
     fun findByRole(role: String): List<User>
 }
