@@ -12,13 +12,14 @@ data class CreateUserRequest(
     val password: String?,
     @field:NotBlank
     val name: String?,
-
     val description: String?,
+    val phone: String?,
 ) {
     fun toUser() = User(
         email = email!!,
         password = password!!,
         name = name!!,
-        description = description ?: ""
+        description = description ?: "",
+        phone = phone?.trim() ?: ""
     )
 }

@@ -28,6 +28,8 @@ class User(
 
     var description: String = "",
 
+    var phone: String = "",
+
     var avatar: String = AvatarService.DEFAULT_AVATAR,
 
     @ManyToMany

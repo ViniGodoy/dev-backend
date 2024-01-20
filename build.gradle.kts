@@ -43,9 +43,10 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 	runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
 
-	val awsVersion = "1.12.586"
+	val awsVersion = "1.12.639"
 	implementation("com.amazonaws:aws-java-sdk-bom:$awsVersion")
 	implementation("com.amazonaws:aws-java-sdk-s3:$awsVersion")
+	implementation("com.amazonaws:aws-java-sdk-sns:$awsVersion")
 	implementation("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

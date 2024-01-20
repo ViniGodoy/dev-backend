@@ -2,6 +2,7 @@ package br.pucpr.authserver.users
 
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
+import br.pucpr.authserver.integration.messaging.MessageClient
 import br.pucpr.authserver.integration.quotes.QuoteClient
 import br.pucpr.authserver.roles.RoleRepository
 import br.pucpr.authserver.security.Jwt
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import kotlin.jvm.optionals.getOrNull
+import kotlin.random.Random
 
 @Service
 class UserService(
@@ -19,6 +21,7 @@ class UserService(
     val roleRepository: RoleRepository,
     val avatarService: AvatarService,
     val quoteClient: QuoteClient,
+    val messenger: MessageClient,
     val jwt: Jwt
 ) {
     fun insert(user: User): User {
@@ -30,7 +33,10 @@ class UserService(
                 user.description = "'${it.text}' (${it.author})"
             }
         }
-
+        if (user.phone.length == 14) {
+            val code = Random.nextInt(1000, 9999)
+            messenger.sendSMS(user, "Hello ${user.name}! Here's your AuthServer code: $code", true)
+        }
 
         return repository.save(user)
             .also { log.info("User inserted: {}", it.id) }
