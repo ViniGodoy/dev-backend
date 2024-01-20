@@ -6,8 +6,9 @@ data class UserResponse(
     val id: Long,
     val email: String,
     val name: String,
+    val description: String,
     val avatar: String
 ) {
     constructor(user: User, avatarUrl: String) :
-            this(user.id!!, user.email, user.name, avatarUrl)
+            this(user.id!!, user.email, user.name, user.description, avatarUrl)
 }

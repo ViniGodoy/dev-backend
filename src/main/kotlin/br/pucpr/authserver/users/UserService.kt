@@ -2,6 +2,7 @@ package br.pucpr.authserver.users
 
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
+import br.pucpr.authserver.integration.quotes.QuoteClient
 import br.pucpr.authserver.roles.RoleRepository
 import br.pucpr.authserver.security.Jwt
 import br.pucpr.authserver.users.controller.responses.LoginResponse
@@ -17,12 +18,20 @@ class UserService(
     val repository: UserRepository,
     val roleRepository: RoleRepository,
     val avatarService: AvatarService,
+    val quoteClient: QuoteClient,
     val jwt: Jwt
 ) {
     fun insert(user: User): User {
         if (repository.findByEmail(user.email) != null) {
             throw BadRequestException("User already exists")
         }
+        if (user.description.isBlank()) {
+            quoteClient.randomQuote()?.also {
+                user.description = "'${it.text}' (${it.author})"
+            }
+        }
+
+
         return repository.save(user)
             .also { log.info("User inserted: {}", it.id) }
     }

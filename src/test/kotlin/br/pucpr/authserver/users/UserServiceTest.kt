@@ -2,6 +2,7 @@ package br.pucpr.authserver.users
 
 import br.pucpr.authserver.exception.BadRequestException
 import br.pucpr.authserver.exception.NotFoundException
+import br.pucpr.authserver.integration.quotes.QuoteClient
 import br.pucpr.authserver.roles.RoleRepository
 import br.pucpr.authserver.security.Jwt
 import br.pucpr.authserver.users.Stubs.roleStub
@@ -29,19 +30,20 @@ import java.util.Optional
 internal class UserServiceTest {
     private val repositoryMock = mockk<UserRepository>()
     private val roleRepositoryMock = mockk<RoleRepository>()
+    private val quoteClientMock = mockk<QuoteClient>()
+    private val avatarService = mockk<AvatarService>()
     private val jwt = mockk<Jwt>()
 
-    private val service = UserService(repositoryMock, roleRepositoryMock, jwt)
+    private val service = UserService(
+        repositoryMock, roleRepositoryMock,
+        avatarService, quoteClientMock, jwt
+    )
 
     @BeforeEach
-    fun setup() {
-        clearAllMocks()
-    }
+    fun setup() = clearAllMocks()
 
     @AfterEach
-    fun cleanUp() {
-        checkUnnecessaryStub(repositoryMock, roleRepositoryMock, jwt)
-    }
+    fun cleanUp() = checkUnnecessaryStub()
 
     @Test
     fun `insert must throw BadRequestException if an user with the same email is found`() {
@@ -214,7 +216,7 @@ internal class UserServiceTest {
 
         service.login(user.email, user.password) shouldBe LoginResponse(
             token = "token",
-            UserResponse(user)
+            UserResponse(user, "")
         )
     }
 }

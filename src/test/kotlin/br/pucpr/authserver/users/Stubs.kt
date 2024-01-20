@@ -10,11 +10,13 @@ object Stubs {
         name: String = "user",
         password: String = "Str4ngP@ss!",
         email: String? = "user@email.com",
+        description: String = "Some user",
         roles: List<String> = listOf()
     ) = User(
         id = id,
         email = email ?: "$name@email.com",
         name = name,
+        description = description,
         password = password,
         roles = roles
             .mapIndexed { i, it -> Role(i.toLong(), it, "$it role") }
@@ -26,6 +28,7 @@ object Stubs {
         email = "admin@authserver.com",
         password = "admin",
         name = "Auth Server Administrator",
+        description = "Auth Server Administrator",
         roles = listOf("ADMIN")
     )
 
